@@ -1,22 +1,38 @@
 #!/usr/bin/node
 const request = require('request');
 
-if (process.argv.length > 2) {
-  request(process.argv[2], (error, response, responseBody) => {
-    const userCompletionCount = {};
-
+// Function to compute the number of completed tasks by user id
+function computeCompletedTasks(apiUrl) {
+  request(apiUrl, (error, response, body) => {
     if (error) {
-      console.log(error);
-    }
+      console.error('Error:', error);
+    } else if (response.statusCode !== 200) {
+      console.error('Invalid response:', response.statusCode);
+    } else {
+      const tasks = JSON.parse(body);
 
-    JSON.parse(responseBody).forEach(item => {
-      if (item.completed) {
-        if (!userCompletionCount[item.userId]) {
-          userCompletionCount[item.userId] = 0;
+      // Create an object to store the count of completed tasks for each user id
+      const completedTasksByUser = {};
+
+      // Loop through the tasks and count the completed tasks for each user
+      tasks.forEach((task) => {
+        if (task.completed) {
+          if (completedTasksByUser.hasOwnProperty(task.userId)) {
+            completedTasksByUser[task.userId]++;
+          } else {
+            completedTasksByUser[task.userId] = 1;
+          }
         }
-        userCompletionCount[item.userId]++;
-      }
-    });
-    console.log(userCompletionCount);
+      });
+
+      // Print the result
+      console.log(completedTasksByUser);
+    }
   });
 }
+
+// Get the API URL from the command line argument
+const apiUrl = process.argv[2];
+
+// Call the function with the provided API URL
+computeCompletedTasks(apiUrl);
